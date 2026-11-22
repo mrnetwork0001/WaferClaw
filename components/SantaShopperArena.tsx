@@ -17,7 +17,7 @@ export function SantaShopperArena({ view, busy, onRun }: { view: RunView; busy: 
     <section className="panel flex h-full min-h-0 flex-col">
       <div className="panel-head">
         <h2 className="label"><span className="idx">04</span>Santa&apos;s Speedy Shopper <span className="text-wc-fg-3">/ 5 real gifts, found live</span></h2>
-        <span className="label !text-wc-fg-3">{mine && who ? `for ${who}` : gifts.length ? `${gifts.length}/5` : ""}</span>
+        <span className="label !text-wc-fg-3">{mine && who && view.status !== "idle" ? `for ${who}` : gifts.length ? `${gifts.length}/5` : ""}</span>
       </div>
 
       <div className="flex flex-wrap items-stretch gap-2 border-b border-wc-border px-3 py-2.5">
@@ -45,6 +45,8 @@ export function SantaShopperArena({ view, busy, onRun }: { view: RunView; busy: 
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             placeholder="@handle, or who it is for"
+            autoComplete="off"
+            spellCheck={false}
             className="min-w-0 flex-1 border border-r-0 border-wc-border bg-wc-bg px-3 font-mono text-[11px] text-wc-bone placeholder:text-wc-fg-3 focus:border-wc-hot focus:outline-none"
           />
           <button
@@ -89,9 +91,15 @@ function EmptyRow({ n, active }: { n: number; active: boolean }) {
 
 /** Prefer a price the agent read from search results; otherwise the one the product page itself declares. */
 function priceOf(card: GiftCard): { text: string; from: string } {
-  const p = card.gift.price;
-  if (p && /\d/.test(p)) return { text: p, from: "agent-read" };
+  const raw = (card.gift.price || "").trim();
+  // Keep only the price itself ("$1,299.00 (sale)" -> "$1,299.00"); never cut a number short.
+  const m = raw.match(/[$€£]\s?\d[\d,]*(?:\.\d{1,2})?|\d[\d,]*(?:\.\d{1,2})?\s?(?:USD|EUR|GBP)/);
+  const agent = m ? m[0] : /\d/.test(raw) && raw.length <= 12 ? raw : "";
+  // "agent-read": the agent's price is in the search or fetch results it received.
+  if (agent && card.priceSeen) return { text: agent, from: "agent-read" };
+  // Otherwise the price the product page itself declares is the better source.
   if (card.pagePrice) return { text: card.pagePrice, from: "page-read" };
+  if (agent) return { text: agent, from: "agent-stated" };
   return { text: card.link === "checking" ? "…" : "—", from: card.link === "checking" ? "" : "see page" };
 }
 
@@ -113,10 +121,10 @@ function GiftRow({ n, card }: { n: number; card: GiftCard }) {
           <LinkFlag card={card} />
         </div>
       </div>
-      <div className="w-[132px] shrink-0 text-right">
-        <div className="num tnum text-[32px] text-wc-bone">{price.text}</div>
-        <div className="mt-1 font-mono tnum text-[9px] uppercase tracking-wider text-wc-fg-3">
-          {price.from ? `${price.from} · ` : ""}+{(card.ms / 1000).toFixed(2)}s
+      <div className="w-[150px] shrink-0 text-right">
+        <div className={`num tnum whitespace-nowrap text-wc-bone ${price.text.length > 8 ? "text-[24px]" : "text-[32px]"}`}>{price.text}</div>
+        <div className="mt-1 whitespace-nowrap font-mono tnum text-[9px] uppercase tracking-wider text-wc-fg-3">
+          {price.from ? `${price.from} · ` : ""}+{(card.ms / 1000).toFixed(1)}s
         </div>
       </div>
     </li>
@@ -131,17 +139,27 @@ function LinkFlag({ card }: { card: GiftCard }) {
   if (card.link === "checking") return <span className="blink shrink-0 text-wc-fg-3">□ Checking</span>;
   if (card.link === "live") return <span className="shrink-0 text-wc-ok">■ Page {card.http}</span>;
   if (card.link === "dead") return <span className="shrink-0 text-wc-bad">■ Missing {card.http}</span>;
-  return <span className="shrink-0 text-wc-fg-3" title="The retailer refuses automated checks. Open the link to confirm the page.">□ Bot-walled</span>;
+  if (card.link === "unreachable") {
+    return <span className="shrink-0 text-wc-fg-3" title="No response to an automated check within 9 seconds. Open the link to confirm the page.">□ No reply</span>;
+  }
+  // 401, 403 and 429 are a store refusing automated requests; anything else is reported as the code it was.
+  const walled = card.http === 401 || card.http === 403 || card.http === 429;
+  return (
+    <span className="shrink-0 text-wc-fg-3" title="The store did not serve the page to an automated check. Open the link to confirm it.">
+      □ {walled ? "Bot-walled" : `HTTP ${card.http}`}
+    </span>
+  );
 }
 
 function Ticket({ receipt, gifts, who }: { receipt: Receipt; gifts: GiftCard[]; who: string }) {
   const [copied, setCopied] = useState(false);
   const isKimi = /kimi/i.test(receipt.model);
+  // Plain text for a reply posted by hand. It carries no account tags or hashtag: a reply sits under
+  // the post that already has them, and repeating them on every reply would read as tag spam.
   const text = [
-    `Santa's Speedy Shopper${who.startsWith("@") ? ` for ${who}` : ""}: OpenClaw + ${isKimi ? "Kimi K3.1 Pro" : receipt.model} on @Cerebras`,
+    `Santa's Speedy Shopper${who.startsWith("@") ? ` for ${who}` : ""}: OpenClaw + ${isKimi ? "Kimi K3.1 Pro" : receipt.model} on Cerebras`,
     `${fmt(receipt.meanTps)} tok/s mean, ${fmt(receipt.peakTps)} peak (server-side decode), ${receipt.completionTokens.toLocaleString("en-US")} tokens in ${receipt.decodeSeconds.toFixed(2)}s`,
     ...gifts.map((g, i) => `${i + 1}. ${g.gift.name}${/\d/.test(priceOf(g).text) ? `, ${priceOf(g).text}` : ""} ${g.gift.url}`),
-    `#KimiOnCerebras @Kimi_Moonshot`,
   ].join("\n");
   const copy = async () => {
     await navigator.clipboard.writeText(text);

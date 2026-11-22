@@ -9,6 +9,7 @@ const TAG: Record<string, { text: string; cls: string }> = {
   "OPENCLAW:RECEIPT": { text: "openclaw:receipt", cls: "text-wc-ok" },
   "OPENCLAW:VERIFY": { text: "openclaw:verify", cls: "text-wc-ok" },
   "CEREBRAS:QUEUE": { text: "cerebras:queue", cls: "text-wc-hot" },
+  RACE: { text: "race", cls: "text-wc-fg-2" },
   ERROR: { text: "error", cls: "text-wc-bad" },
 };
 
@@ -28,7 +29,7 @@ export function OpenClawTerminal({ view }: { view: RunView }) {
       <div ref={ref} className="scroll-thin min-h-[120px] flex-1 overflow-y-auto px-3 py-2 font-mono text-[10.5px] leading-[1.7]">
         {view.logs.length === 0 && (
           <p className="max-w-[46ch] text-wc-fg-3">
-            Each line is emitted by a real <span className="text-wc-bone">openclaw agent exec</span> process, or by a model call it makes to Cerebras.
+            Each line comes from a real <span className="text-wc-bone">openclaw agent exec</span> process, from a model call it makes to Cerebras, or from the speed race sent beside it.
           </p>
         )}
         {view.logs.map((l) => {

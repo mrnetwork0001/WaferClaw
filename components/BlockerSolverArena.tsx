@@ -45,7 +45,7 @@ export function BlockerSolverArena({ view, busy, onRun }: { view: RunView; busy:
         <h2 className="label whitespace-nowrap"><span className="idx">04</span>Cross-team blocker &amp; PR solver <span className="text-wc-fg-3">/ after{" "}
           <a className="underline underline-offset-2 hover:text-wc-hot" href="https://x.com/andrewdfeldman/status/2122694244561276984" target="_blank" rel="noreferrer">@andrewdfeldman</a></span>
         </h2>
-        <span className="label !text-wc-fg-3">{customOpen && custom.trim() ? "your material" : "sample incident"}</span>
+        <span className="label !text-wc-fg-3">{customOpen && custom.trim() ? "your material" : "fictional sample input"}</span>
       </div>
 
       <div className="border-b border-wc-border px-3 py-2.5">
@@ -55,10 +55,10 @@ export function BlockerSolverArena({ view, busy, onRun }: { view: RunView; busy:
             disabled={busy}
             className="bg-wc-hot px-4 py-2 font-display text-[19px] font-bold uppercase leading-none tracking-wide text-wc-bg transition hover:bg-wc-bone disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {busy && mine ? "Auditing…" : "Run OpenClaw blocker audit"}
+            {busy && mine ? "Auditing…" : customOpen && custom.trim() ? "Run audit on your pasted material" : "Run OpenClaw blocker audit"}
           </button>
           <button onClick={() => setCustomOpen((v) => !v)} className="border border-wc-border-hi px-3 font-mono text-[11px] text-wc-bone transition hover:border-wc-hot hover:text-wc-hot">
-            {customOpen ? "Use the sample incident" : "Paste your own"}
+            {customOpen ? "Back to the sample incident" : "Paste your own"}
           </button>
           <p className="ml-auto max-w-[36ch] self-center text-right text-[11.5px] leading-snug text-wc-fg-2">Three teams each hold part of the answer. The agent finds what is stuck between them.</p>
         </div>
@@ -67,6 +67,7 @@ export function BlockerSolverArena({ view, busy, onRun }: { view: RunView; busy:
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             aria-label="Your own GitHub, Slack and doc excerpts"
+            spellCheck={false}
             placeholder="Paste GitHub issues, Slack threads and doc excerpts here. Left empty, the audit runs on the sample incident."
             className="scroll-thin mt-2 h-[92px] w-full resize-none border border-wc-border bg-wc-bg p-2 font-mono text-[10.5px] text-wc-bone placeholder:text-wc-fg-3 focus:border-wc-hot focus:outline-none"
           />
@@ -147,6 +148,7 @@ export function BlockerSolverArena({ view, busy, onRun }: { view: RunView; busy:
           {mine && view.receipt && (
             <div className="ticket row-in mx-3 mb-3 mt-2 flex shrink-0 items-baseline gap-4 px-3 py-1.5 font-mono text-[10px]">
               <span className="num tnum text-[30px]">{view.receipt.wallSeconds.toFixed(1)}s</span>
+              <span className="font-semibold uppercase tracking-wider">wall time, of which {view.receipt.queueSeconds.toFixed(1)} s queue</span>
               <span className="font-medium">{fmt(view.receipt.meanTps)} tok/s mean · {fmt(view.receipt.completionTokens)} tokens · {view.receipt.model}</span>
             </div>
           )}
