@@ -6,9 +6,9 @@ Every run starts a real `openclaw agent exec` process (OpenClaw is an agent harn
 
 Everything is judged by one number: **decode speed in tokens per second (tok/s), `completion_tokens / completion_time`, both taken from what Cerebras reports for each model call.** A token is a word piece, and decode speed is how fast the model writes once it has started. The receipt prints wall time and, within it, the seconds spent in Cerebras's queue. Time on the network or inside a tool appears only as part of wall time, and none of it is counted in the decode speed.
 
-Built for the Cerebras x Moonshot AI Kimi K3.1 Pro x OpenClaw Weekend Hackathon (21 to 22 November 2026) · **Independent entry, not affiliated with Cerebras, Moonshot AI or OpenClaw** · App: none hosted, it runs locally at `http://localhost:3210` · Demo: `<VIDEO_URL>` · Code: [github.com/mrnetwork0001/WaferClaw](https://github.com/mrnetwork0001/WaferClaw) (private at the time of writing)
+Built for the Cerebras x Moonshot AI Kimi K3.1 Pro x OpenClaw Weekend Hackathon (21 to 22 November 2026) · **Independent entry, not affiliated with Cerebras, Moonshot AI or OpenClaw** · App: none hosted, it runs locally at `http://localhost:3210` · Demo: the submission post on X (link to follow) · Code: [github.com/mrnetwork0001/WaferClaw](https://github.com/mrnetwork0001/WaferClaw)
 
-**Judges, start here:** watch the demo at `<VIDEO_URL>`. There is no zero-setup path, because every run makes real calls. To see it work yourself you need access to the repository (private at the time of writing), your own Cerebras key with access to the preview model, and the steps in [Run it locally](#run-it-locally): clone, `npm install`, `npm run setup:openclaw`, put your key in `.env.local`, `npm run dev`. Then open `http://localhost:3210` and press **Run the 5-gift hunt**. Setup details are in [OPENCLAW_SETUP.md](OPENCLAW_SETUP.md), the recording plan is in [DEMO_SCRIPT.md](DEMO_SCRIPT.md), and the measured numbers from 22 November 2026 are under [One real run, end to end](#one-real-run-end-to-end).
+**Judges, start here:** watch the demo video in the submission post on X (link to follow). There is no zero-setup path, because every run makes real calls. To see it work yourself you need your own Cerebras key with access to the preview model, and the steps in [Run it locally](#run-it-locally): clone, `npm install`, `npm run setup:openclaw`, put your key in `.env.local`, `npm run dev`. Then open `http://localhost:3210` and press **Run the 5-gift hunt**. Setup details are in [OPENCLAW_SETUP.md](OPENCLAW_SETUP.md), and the measured numbers from 22 November 2026 are under [One real run, end to end](#one-real-run-end-to-end).
 
 ---
 
@@ -468,7 +468,6 @@ Next.js 15.1.0 (App Router) and React 19.3.1 with react-dom, the only runtime de
 
 **Prerequisites**
 
-- Access to the repository, which is private at the time of writing.
 - Node 24.16 or later on the 24 line, or 26.1 or later. OpenClaw 2026.11.6 does not accept Node 25.
 - A Cerebras API key with access to `moonshotai-kimi-k3.1-pro-trial`, the hackathon's private preview model.
 - A shell with `bash` and `curl`. It was built and run on macOS; nothing was tested on Linux or Windows.
@@ -545,7 +544,7 @@ RACE2_NOTE="GPU cloud, MXFP4 as released, via OpenRouter"
 There is no hosted deployment, and none is planned for the hackathon.
 
 1. **Why it is local.** Each run spawns an OpenClaw command-line process on the same machine, keeps its state in the server's memory, and has that process call the app back on `127.0.0.1`. The server binds to `127.0.0.1` only, so it cannot be opened from a phone or another computer.
-2. **Recording a demo.** `npm run build && npm start` serves a production build on the same address. The build was not re-run as part of the checks above. [DEMO_SCRIPT.md](DEMO_SCRIPT.md) holds the recording plan, the post copy and the submission checklist.
+2. **Recording a demo.** `npm run build && npm start` serves a production build on the same address. The build was not re-run as part of the checks above.
 3. **The race.** The comparison shown in the results above reaches two rivals through OpenRouter, each lane pinned to one upstream host with fallbacks turned off: DigitalOcean (a GPU cloud that does not publish the chip or quantization it uses for this model) and Modal (a GPU cloud that serves MXFP4, the format Moonshot releases the model in).
 4. **The Speed Bounty.** The bounty is measured in a second, separate OpenClaw build: commit `8b18b55` plus the official patch from [openclaw-speed-patch](https://github.com/wkasekende/openclaw-speed-patch), kept under `.openclaw-sandbox/bounty/` and started with `scripts/bounty-gateway.sh` (which uses `scripts/oc-bounty`; add `--clean` to open the chat in a bare Google Chrome window on macOS, which suits recording the Speed Bounty entry, the only video the patched build may appear in). The hackathon rules forbid the patched build in public demos, so the app and the demo video use standard OpenClaw 2026.11.6. The steps that build the patched copy are not in this repository; the script exits with *Patched OpenClaw is not built yet* when it is absent.
 5. **A busy endpoint.** When Cerebras answers `429 queue_exceeded`, the app waits and retries for the agent, and the log shows `cerebras:queue` lines. The patched build talks to Cerebras directly, so a bounty run on a busy endpoint may need more than one attempt.
@@ -586,11 +585,7 @@ openclaw.config.json5                            OpenClaw config template: model
 package.json, package-lock.json                  npm scripts (dev and start bind 127.0.0.1:3210, setup:openclaw, bounty) and locked dependency versions
 README.md                                        this file
 OPENCLAW_SETUP.md                                the two OpenClaw installs and how to check them
-DEMO_SCRIPT.md                                   recording plan, post copy, Speed Bounty prompt, checklist
 DESIGN.md                                        the "fab instrument" design system
-CLAUDE.md, WAFERCLAW_PROJECT_SPEC.md             the original plan (see credits: superseded where they differ)
-ANTIGRAVITY_WAFERCLAW.md, CLAUDE_WAFERCLAW.md,
-.agents/skills/, .claude/skills/ (a symlink)     instructions for coding agents, not user documentation
 next.config.mjs, tailwind.config.ts,
 postcss.config.mjs, tsconfig.json                build, palette and compiler settings
 LICENSE                                          Apache 2.0 text, incomplete (see License)
@@ -616,7 +611,7 @@ There is no `src/`, `public/`, `tests/` or `docs/` folder.
 - **The speed patch** is the official [openclaw-speed-patch](https://github.com/wkasekende/openclaw-speed-patch), applied to OpenClaw commit `8b18b55` and used only for the Speed Bounty.
 - **Cerebras Inference** serves the Kimi K3.1 Pro preview. **OpenRouter**, **DigitalOcean** and **Modal** appear only as the rival lanes of the race.
 - **Fonts:** Barlow Condensed, Archivo and Martian Mono, loaded through `next/font`. **Open-source npm packages** are listed in `package.json`.
-- **The planning documents** (`CLAUDE.md`, `WAFERCLAW_PROJECT_SPEC.md`, `DEMO_SCRIPT.md`, `DESIGN.md`, `OPENCLAW_SETUP.md`) were written on the morning of 22 November 2026. `CLAUDE.md` and `WAFERCLAW_PROJECT_SPEC.md` still hold the original plan, which spoke of a fixed "2,000 tokens per second" and a modelled "65 tokens per second GPU, 30x" bar. Both were dropped in favour of measured numbers, so where the plan and this README differ, the code and this README are right.
+- **The original planning documents** are not part of this repository. They were written on the morning of 22 November 2026 and spoke of a fixed "2,000 tokens per second" and a modelled "65 tokens per second GPU, 30x" bar. Both were dropped in favour of measured numbers.
 - **No prior WaferClaw code.** Everything else was written during the hackathon, on 22 November 2026.
 
 ## License

@@ -12,7 +12,7 @@ if ! curl -s -o /dev/null -m 3 "http://127.0.0.1:$PORT/"; then
   for _ in $(seq 1 40); do curl -s -o /dev/null -m 2 "http://127.0.0.1:$PORT/" && break; sleep 1; done
 fi
 "$ROOT/scripts/oc-bounty" --version | tail -1
-echo "Opening the web chat. Paste the Speed Bounty prompt from DEMO_SCRIPT.md and record the screen."
+echo "Opening the web chat. Paste the Speed Bounty prompt from OPENCLAW_SETUP.md and record the screen."
 if [ "${1:-}" = "--clean" ]; then
   # Chrome app window: no tabs, bookmarks or extensions in frame, which suits a screen recording.
   URL="$("$ROOT/scripts/oc-bounty" dashboard --no-open --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).browserUrl))')"

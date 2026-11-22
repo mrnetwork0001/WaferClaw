@@ -49,7 +49,14 @@ The bounty is measured by the official patch ([openclaw-speed-patch](https://git
 scripts/bounty-gateway.sh --clean
 ```
 
-`--clean` opens the web chat in a window with no tabs or address bar, which suits a screen recording. Paste the prompt from section 4 of [DEMO_SCRIPT.md](DEMO_SCRIPT.md) and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message. The video has to show all 5 products with their links and the readout.
+`--clean` opens the web chat in a window with no tabs or address bar, which suits a screen recording. Paste the prompt below and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message. The video has to show all 5 products with their links and the readout.
+
+```
+Find 5 real Christmas gifts for a tech and maker enthusiast from real shopping websites.
+Step 1: in one turn, call web_search 5 or 6 times in parallel, one query per gift, each aimed at a product page on a real retailer's own site.
+Step 2: answer from those results. Every link must be copied exactly from a search result and must be a specific product page.
+Reply with a numbered list of exactly 5 gifts. For each: product name, retailer, price if shown, the full product page URL, and a two-sentence reason.
+```
 
 ## Busy endpoint
 
