@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Runs the project-local, isolated OpenClaw. Nothing is read from or written to ~/.openclaw.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+S="$ROOT/.openclaw-sandbox"
+if [ -f "$ROOT/.env.local" ]; then set -a; . "$ROOT/.env.local"; set +a; fi
+export OPENCLAW_HOME="$S/home"
+export OPENCLAW_STATE_DIR="$S/state"
+export OPENCLAW_CONFIG_PATH="$S/state/openclaw.json"
+export OPENCLAW_WORKSPACE_DIR="$S/workspace"
+exec "$S/app/node_modules/.bin/openclaw" "$@"
