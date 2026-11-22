@@ -51,3 +51,6 @@ scripts/bounty-gateway.sh
 
 Then open the URL it prints, paste the prompt from [DEMO_SCRIPT.md](DEMO_SCRIPT.md#speed-bounty-run), and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message.
 
+## Busy endpoint
+
+When the Kimi endpoint is overloaded Cerebras answers `429 queue_exceeded`. The WaferClaw app waits and retries on the agent's behalf (shown as `[CEREBRAS:QUEUE]` in the console). The patched OpenClaw talks to Cerebras directly, so a bounty run during a busy period may need a few attempts.
