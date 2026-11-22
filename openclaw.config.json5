@@ -1,0 +1,113 @@
+// WaferClaw — OpenClaw config for Kimi K3.1 Pro on Cerebras.
+// scripts/setup-openclaw.sh copies this to .openclaw-sandbox/state/openclaw.json (an isolated
+// state directory inside this project; ~/.openclaw is never touched), then installs the key-free
+// DuckDuckGo search plugin and selects it as the web_search provider.
+// The model entry follows the official hackathon example (dev/cerebras-kimi/openclaw.json).
+// Tools are limited to web_search and web_fetch: the agent cannot run commands or touch files.
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "cerebras/moonshotai-kimi-k3.1-pro-trial"
+      },
+      "thinkingDefault": "low"
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "cerebras": {
+        "baseUrl": "https://api.cerebras.ai/v1",
+        "api": "openai-completions",
+        "apiKey": "${CEREBRAS_API_KEY}",
+        "models": [
+          {
+            "id": "moonshotai-kimi-k3.1-pro-trial",
+            "name": "Kimi K3.1 Pro (Cerebras)",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "compat": {
+              "supportsTools": true,
+              "supportsStrictMode": false,
+              "supportsReasoningEffort": true,
+              "supportedReasoningEfforts": [
+                "low",
+                "high",
+                "max"
+              ]
+            }
+          },
+          {
+            "id": "gpt-oss-120b",
+            "name": "GPT-OSS 120B (Cerebras)",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "compat": {
+              "supportsTools": true,
+              "supportsStrictMode": false,
+              "supportsReasoningEffort": true,
+              "supportedReasoningEfforts": [
+                "low",
+                "high",
+                "max"
+              ]
+            }
+          },
+          {
+            "id": "qwen-3.8-27b",
+            "name": "Qwen 3.8 27B (Cerebras)",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "compat": {
+              "supportsTools": true,
+              "supportsStrictMode": false,
+              "supportsReasoningEffort": true,
+              "supportedReasoningEfforts": [
+                "low",
+                "high",
+                "max"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tools": {
+    "allow": [
+      "web_search",
+      "web_fetch"
+    ],
+    "web": {
+      "fetch": {
+        "maxChars": 8000,
+        "maxCharsCap": 8000
+      }
+    }
+  }
+}
