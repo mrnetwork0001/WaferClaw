@@ -34,3 +34,33 @@ body {
 .scroll-thin::-webkit-scrollbar-thumb { background: #4A443C; }
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
+@keyframes rowIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.row-in { animation: rowIn 0.26s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.blink { animation: blink 1s steps(2, start) infinite; }
+@keyframes dieFlicker { 0%, 100% { opacity: 1; } 45% { opacity: 0.55; } }
+.wafer-live .die-lit { animation: dieFlicker 0.5s ease-in-out infinite; }
+.wafer-live .die-lit:nth-child(3n) { animation-delay: 0.12s; }
+.wafer-live .die-lit:nth-child(5n) { animation-delay: 0.27s; }
+.wafer-live .die-lit:nth-child(7n) { animation-delay: 0.38s; }
+@keyframes scan { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+.scan { position: relative; overflow: hidden; }
+.scan::after {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 25%;
+  background: linear-gradient(90deg, transparent, rgba(255, 90, 31, 0.22), transparent);
+  animation: scan 1.4s linear infinite;
+}
+@keyframes hatchMove { from { background-position: 0 0; } to { background-position: 16px 0; } }
+.hatch {
+  background-image: repeating-linear-gradient(115deg, rgba(10,9,8,0.35) 0 4px, transparent 4px 8px);
+  background-size: 16px 100%; animation: hatchMove 0.5s linear infinite;
+}
+/* Printed ticket edge */
+.ticket { background: #ECE5D5; color: #0A0908; position: relative; }
+.ticket::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 6px;
+  background: radial-gradient(circle at 6px 0, transparent 4px, #ECE5D5 4.5px) 0 0 / 12px 6px repeat-x;
+}
+@media (prefers-reduced-motion: reduce) {
+  .row-in, .blink, .wafer-live .die-lit, .scan::after, .hatch { animation: none; }
+}
