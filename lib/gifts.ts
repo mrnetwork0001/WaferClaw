@@ -66,6 +66,21 @@ export function urlWasSourced(url: string, toolText: string): boolean {
   return false;
 }
 
+/** True when the price the agent answered with appears, as a number, in the web results it received. */
+export function priceWasSourced(price: string, toolText: string): boolean {
+  const m = (price || "").match(/\d[\d,]*(?:\.\d{1,2})?/);
+  if (!m || !toolText) return false;
+  const plain = m[0].replace(/,/g, "");
+  if (!(Number(plain) > 0)) return false;
+  // Compare without thousands separators, so "$1299" matches a page that says "1,299.00".
+  const haystack = toolText.replace(/(\d),(?=\d{3}(?!\d))/g, "$1");
+  for (const form of new Set([plain, plain.replace(/\.00$/, "")])) {
+    const re = new RegExp(`(?<![\\d.])${form.replace(/[.]/g, "\\.")}(?!\\d)`);
+    if (re.test(haystack)) return true;
+  }
+  return false;
+}
+
 /** Fetches the product page from this machine: does the link resolve, and what price does the page itself state? */
 export async function checkLink(url: string): Promise<{ status: LinkStatus; http: number | null; price: string | null }> {
   try {
