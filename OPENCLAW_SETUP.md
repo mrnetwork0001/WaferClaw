@@ -41,3 +41,13 @@ Check which models your key can use:
 curl -s https://api.cerebras.ai/v1/models -H "Authorization: Bearer $CEREBRAS_API_KEY" | grep -o '"id":"[^"]*"'
 ```
 
+## 2. Patched OpenClaw (Speed Bounty)
+
+The bounty is measured by the official patch ([openclaw-speed-patch](https://github.com/wkasekende/openclaw-speed-patch)), which adds a `<mean> tok/s mean · <p90> p90 (server)` readout to OpenClaw's own web chat. Start it with:
+
+```bash
+scripts/bounty-gateway.sh
+```
+
+Then open the URL it prints, paste the prompt from [DEMO_SCRIPT.md](DEMO_SCRIPT.md#speed-bounty-run), and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message.
+
