@@ -6,6 +6,7 @@ import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { createRun, emit, type RunState } from "./bus";
+import { runRaces } from "./race";
 import type { Mode, Receipt } from "./types";
 
 const ROOT = process.cwd();
@@ -48,6 +49,8 @@ export function openclawVersion(): Promise<string> {
 export interface StartOptions {
   mode: Mode;
   prompt: string;
+  /** The identical request sent to every provider in the speed race (tool-free). */
+  racePrompt: string;
   /** Origin of this Next.js server, e.g. http://127.0.0.1:3000 (OpenClaw calls the proxy on it). */
   origin: string;
   signal?: AbortSignal;
@@ -55,18 +58,27 @@ export interface StartOptions {
 
 export function startRun(opts: StartOptions): RunState {
   const run = createRun(randomUUID().slice(0, 8), opts.mode, PRIMARY_MODEL);
-  void drive(run, opts).catch((err) => {
+  // The race is cancelled whenever the run ends without a receipt, so no lane keeps spending
+  // quota for a result nobody will see.
+  const raceAbort = new AbortController();
+  void drive(run, opts, raceAbort).catch((err) => {
+    raceAbort.abort();
     emit(run, { t: "error", message: String(err?.message || err) });
     emit(run, { t: "done" });
   });
   return run;
 }
 
-async function drive(run: RunState, opts: StartOptions) {
+async function drive(run: RunState, opts: StartOptions, raceAbort: AbortController) {
   if (!process.env.CEREBRAS_API_KEY) throw new Error("CEREBRAS_API_KEY is not set (add it to .env.local).");
   if (!openclawInstalled()) throw new Error("OpenClaw is not installed in .openclaw-sandbox (run: npm run setup:openclaw).");
   const harness = await openclawVersion();
   const models = [PRIMARY_MODEL, ...FALLBACK_MODELS.filter((m) => m !== PRIMARY_MODEL)];
+
+  // The speed race: one identical request to Cerebras and to every configured rival, sent now
+  // (no rival configured: no race and no extra call).
+  const raceSignal = opts.signal ? AbortSignal.any([opts.signal, raceAbort.signal]) : raceAbort.signal;
+  const race = runRaces(run, opts.racePrompt, raceSignal);
 
   let envelope: any = null;
   for (let i = 0; i < models.length; i++) {
@@ -85,6 +97,7 @@ async function drive(run: RunState, opts: StartOptions) {
   }
 
   if (opts.signal?.aborted) {
+    raceAbort.abort();
     emit(run, { t: "done" });
     return;
   }
@@ -92,6 +105,7 @@ async function drive(run: RunState, opts: StartOptions) {
   const finalText: string = (envelope?.final || "").trim() || run.content.trim();
   emit(run, { t: "final", text: finalText });
   if (run.calls.length === 0) {
+    raceAbort.abort();
     emit(run, { t: "error", message: envelope?.error?.message || "OpenClaw finished without a completed model call." });
     emit(run, { t: "done" });
     return;
@@ -108,6 +122,8 @@ async function drive(run: RunState, opts: StartOptions) {
     text: `${receipt.meanTps.toFixed(0)} tok/s mean · ${receipt.peakTps.toFixed(0)} peak · ${receipt.completionTokens} tokens in ${receipt.decodeSeconds.toFixed(2)}s decode · sha256 ${receipt.sha256.slice(0, 12)}`,
   });
   emit(run, { t: "receipt", receipt });
+  // The agent run is done; keep the stream open until every race lane finishes so its real result is shown.
+  await race;
   emit(run, { t: "done" });
 }
 
