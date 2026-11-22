@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BlockerSolverArena } from "@/components/BlockerSolverArena";
 import { LogoMark, Wordmark } from "@/components/Logo";
 import { OpenClawTerminal } from "@/components/OpenClawTerminal";
+import { RunPipeline } from "@/components/RunPipeline";
 import { SantaShopperArena } from "@/components/SantaShopperArena";
 import { WaferSpeedometer } from "@/components/WaferSpeedometer";
 import { useRun } from "@/lib/use-run";
@@ -13,7 +14,7 @@ interface Status { openclaw: { installed: boolean; version: string | null }; cer
 export default function Page() {
   const [mode, setMode] = useState<Mode>("shopper");
   const [status, setStatus] = useState<Status | null>(null);
-  const { view, start } = useRun();
+  const { view, start, reset } = useRun();
   const busy = view.status === "running";
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function Page() {
 
   const connected = Boolean(status?.openclaw.installed && status?.cerebras.keyPresent);
   const model = (view.model || status?.model || "cerebras/…").replace(/^cerebras\//, "");
-  const harness = status == null ? "checking" : connected ? "connected" : status.openclaw.installed ? "no API key" : "not installed";
+  const harness = status == null ? "checking" : connected ? `ready · ${(status.openclaw.version || "").replace(/^OpenClaw\s+/, "").split(" ")[0]}` : status.openclaw.installed ? "no API key" : "not installed";
 
   return (
     <div className="flex min-h-screen flex-col lg:h-screen">
@@ -39,12 +40,13 @@ export default function Page() {
 
         <dl className="flex items-stretch font-mono text-[9.5px]">
           <Cell k="OpenClaw harness">
-            <span className={connected ? "text-wc-ok" : "text-wc-bad"}><span className={connected ? "blink" : ""}>■</span> {harness}</span>
+            <span className={connected ? "text-wc-ok" : "text-wc-bad"}>■ {harness}</span>
           </Cell>
           <Cell k="Model · Cerebras"><span className="text-wc-bone">{model}</span></Cell>
-          <Cell k="Wafer SRAM" hideBelowXl><span className="text-wc-bone">44 GB · 21 PB/s</span></Cell>
         </dl>
       </header>
+
+      <RunPipeline view={view} onReset={reset} />
 
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-12">
         <div className="flex min-h-0 flex-col gap-3 lg:col-span-5">
@@ -78,9 +80,9 @@ function Tab({ n, active, onClick, children }: { n: string; active: boolean; onC
   );
 }
 
-function Cell({ k, children, hideBelowXl }: { k: string; children: React.ReactNode; hideBelowXl?: boolean }) {
+function Cell({ k, children }: { k: string; children: React.ReactNode }) {
   return (
-    <div className={`${hideBelowXl ? "hidden xl:flex" : "flex"} flex-col justify-center border-l border-wc-border px-3 py-1.5`}>
+    <div className="flex flex-col justify-center border-l border-wc-border px-3 py-1.5">
       <dt className="uppercase tracking-[0.14em] text-wc-fg-3" style={{ fontSize: 8 }}>{k}</dt>
       <dd className="mt-0.5 font-medium">{children}</dd>
     </div>

@@ -43,6 +43,8 @@ body {
 .wafer-live .die-lit:nth-child(3n) { animation-delay: 0.12s; }
 .wafer-live .die-lit:nth-child(5n) { animation-delay: 0.27s; }
 .wafer-live .die-lit:nth-child(7n) { animation-delay: 0.38s; }
+@keyframes sweep { to { transform: rotate(360deg); } }
+.wafer-sweep { transform-box: view-box; transform-origin: 100px 100px; animation: sweep 2.2s linear infinite; }
 @keyframes scan { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
 .scan { position: relative; overflow: hidden; }
 .scan::after {
@@ -62,5 +64,5 @@ body {
   background: radial-gradient(circle at 6px 0, transparent 4px, #ECE5D5 4.5px) 0 0 / 12px 6px repeat-x;
 }
 @media (prefers-reduced-motion: reduce) {
-  .row-in, .blink, .wafer-live .die-lit, .scan::after, .hatch { animation: none; }
+  .row-in, .blink, .wafer-live .die-lit, .wafer-sweep, .scan::after, .hatch { animation: none; }
 }
