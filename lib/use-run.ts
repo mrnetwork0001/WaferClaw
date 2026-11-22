@@ -162,3 +162,18 @@ export function useRun() {
   return { view, start, stop };
 }
 
+/** Speed numbers derived from the server-reported per-call usage + time_info. */
+export function speed(view: RunView) {
+  const tokens = view.calls.reduce((a, c) => a + c.tokens, 0);
+  const seconds = view.calls.reduce((a, c) => a + c.seconds, 0);
+  const mean = seconds > 0 ? tokens / seconds : 0;
+  const peak = view.calls.reduce((a, c) => Math.max(a, c.tps), 0);
+  const last = view.calls.length ? view.calls[view.calls.length - 1].tps : 0;
+  // While a call is streaming we only have characters and wall time: a rough client-side estimate.
+  let liveEst = 0;
+  if (view.streaming && view.liveStartMs != null) {
+    const dt = Math.max(0.15, (view.liveNowMs - view.liveStartMs) / 1000);
+    liveEst = view.liveChars / 4 / dt;
+  }
+  return { tokens, seconds, mean, peak, last, liveEst };
+}
