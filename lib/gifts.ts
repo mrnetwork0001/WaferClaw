@@ -66,3 +66,70 @@ export function urlWasSourced(url: string, toolText: string): boolean {
   return false;
 }
 
+/** Fetches the product page from this machine: does the link resolve, and what price does the page itself state? */
+export async function checkLink(url: string): Promise<{ status: LinkStatus; http: number | null; price: string | null }> {
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: AbortSignal.timeout(9000),
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36",
+        accept: "text/html,application/xhtml+xml",
+        "accept-language": "en-US,en;q=0.9",
+      },
+    });
+    if (res.status >= 200 && res.status < 400) {
+      const html = await readSome(res, 2_500_000);
+      return { status: "live", http: res.status, price: priceFromHtml(html) };
+    }
+    res.body?.cancel().catch(() => {});
+    if (res.status === 404 || res.status === 410) return { status: "dead", http: res.status, price: null };
+    // Retail sites commonly answer 403/429/503 to non-browser clients; the page may still exist.
+    return { status: "blocked", http: res.status, price: null };
+  } catch {
+    return { status: "unreachable", http: null, price: null };
+  }
+}
+
+async function readSome(res: Response, maxBytes: number): Promise<string> {
+  if (!res.body) return "";
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let out = "";
+  try {
+    while (out.length < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      out += decoder.decode(value, { stream: true });
+    }
+  } catch { /* partial is fine */ }
+  reader.cancel().catch(() => {});
+  return out;
+}
+
+/** Reads the price a product page declares in its structured data (schema.org / Open Graph). */
+export function priceFromHtml(html: string): string | null {
+  const patterns: RegExp[] = [
+    /<meta[^>]+(?:property|name)=["'](?:product:price:amount|og:price:amount)["'][^>]+content=["']([\d.,]+)["']/i,
+    /<meta[^>]+content=["']([\d.,]+)["'][^>]+(?:property|name)=["'](?:product:price:amount|og:price:amount)["']/i,
+    /<meta[^>]+itemprop=["']price["'][^>]+content=["']([\d.,]+)["']/i,
+    /"(?:price|lowPrice|salePrice|currentPrice|current_retail|fullPrice|priceAmount|formatted_current_price|raw_price)"\s*:\s*\{?\s*(?:"(?:amount|value|raw_amount)"\s*:\s*)?"?\$?(\d[\d.,]*)"?/,
+    /class="a-offscreen">\s*\$(\d[\d.,]*)/,
+    /data-price(?:-amount)?=["']\$?(\d[\d.,]*)["']/i,
+  ];
+  for (const re of patterns) {
+    const m = html.match(re);
+    if (!m) continue;
+    const n = Number(m[1].replace(/[.,]+$/, "").replace(/,(?=\d{3}\b)/g, ""));
+    if (!Number.isFinite(n) || n <= 0 || n > 100000) continue;
+    // Use the currency declared right next to this price; pages often list several regions.
+    const at = m.index ?? 0;
+    const near = html.slice(Math.max(0, at - 300), at + 300);
+    const cur = near.match(/"priceCurrency"\s*:\s*"([A-Z]{3})"/)?.[1] || near.match(/price:currency["'][^>]+content=["']([A-Z]{3})["']/i)?.[1] || "USD";
+    const sym = cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : `${cur} `;
+    return `${sym}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return null;
+}
