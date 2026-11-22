@@ -29,3 +29,22 @@ Output ONLY a JSON array with exactly 5 objects and nothing else (no markdown fe
 [{"name": "...", "price": "...", "retailer": "...", "url": "https://...", "reason": "..."}]`;
 }
 
+export function blockerPrompt(custom?: string): string {
+  const material = custom?.trim() ? custom.trim() : incidentToText(SAMPLE_INCIDENT);
+  return `You are a cross-team incident analyst. Below is raw material from Engineering (GitHub), Support (Slack) and Product (architecture docs). Do not call any tools; everything you need is below.
+
+${material}
+
+Find what is blocked BETWEEN teams (each team holds part of the answer). Identify exactly 2 cross-team blockers, give one concrete next step per team, and draft a pull request that fixes the root cause using only the files shown above.
+
+Reply in EXACTLY this format, with these marker lines, and nothing before or after:
+<<<ANALYSIS_JSON>>>
+{"blockers":[{"title":"...","severity":"P1|P2","teams":["Engineering","Support","Product"],"rootCause":"one or two sentences","evidence":[{"team":"...","quote":"short exact quote from the material"}]}],"nextSteps":{"Engineering":"...","Support":"...","Product":"..."}}
+<<<PR_TITLE>>>
+one line
+<<<PR_BODY>>>
+4 short plain-text lines (no markdown): What / Why / Test plan / Customer impact, each under 25 words
+<<<PR_DIFF>>>
+a valid unified git diff (diff --git a/... b/...) touching only files shown in the material
+<<<END>>>`;
+}
