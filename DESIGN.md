@@ -8,7 +8,7 @@ The interface is styled as a piece of semiconductor test equipment rather than a
 - **Instrument panels, not cards.** Square corners, 1px hairlines, orange registration marks at two corners, numbered silkscreen labels (`01 DECODE SPEED`).
 - **The receipt is paper.** Run results print on an inverted bone "ticket" with a perforated edge.
 - **No emoji, no stock icons.** The only mark is the WaferClaw logo: a wafer disc raked by three claw cuts (`components/Logo.tsx`, `app/icon.svg`).
-- **Every number says where it came from.** Measured, modelled and estimated values are labelled as such.
+- **Every number is measured.** Nothing is modelled or simulated; the one live estimate (speed while a call is still streaming) is labelled and replaced by the server figure.
 
 ## Tokens (tailwind `wc-*`)
 | Token | Hex | Use |

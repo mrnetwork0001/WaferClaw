@@ -1,4 +1,4 @@
-# 🦞 OpenClaw setup for WaferClaw
+# OpenClaw setup for WaferClaw
 
 WaferClaw uses two separate OpenClaw installs, both inside `.openclaw-sandbox/` in this project. Neither touches `~/.openclaw` or installs anything globally.
 
@@ -46,11 +46,11 @@ curl -s https://api.cerebras.ai/v1/models -H "Authorization: Bearer $CEREBRAS_AP
 The bounty is measured by the official patch ([openclaw-speed-patch](https://github.com/wkasekende/openclaw-speed-patch)), which adds a `<mean> tok/s mean · <p90> p90 (server)` readout to OpenClaw's own web chat. Start it with:
 
 ```bash
-scripts/bounty-gateway.sh
+scripts/bounty-gateway.sh --clean
 ```
 
-Then open the URL it prints, paste the prompt from [DEMO_SCRIPT.md](DEMO_SCRIPT.md#speed-bounty-run), and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message.
+`--clean` opens the web chat in a window with no tabs or address bar, which suits a screen recording. Paste the prompt from section 4 of [DEMO_SCRIPT.md](DEMO_SCRIPT.md) and record the screen. The entry is that video posted in `#share-your-demo` on the Cerebras Discord with the mean tok/s written in the message. The video has to show all 5 products with their links and the readout.
 
 ## Busy endpoint
 
-When the Kimi endpoint is overloaded Cerebras answers `429 queue_exceeded`. The WaferClaw app waits and retries on the agent's behalf (shown as `[CEREBRAS:QUEUE]` in the console). The patched OpenClaw talks to Cerebras directly, so a bounty run during a busy period may need a few attempts.
+When the Kimi endpoint is overloaded Cerebras answers `429 queue_exceeded`. The WaferClaw app waits and retries on the agent's behalf (shown as `cerebras:queue` lines in the harness log, and as queue seconds on the receipt). The patched OpenClaw talks to Cerebras directly, so a bounty run during a busy period may need a few attempts.
