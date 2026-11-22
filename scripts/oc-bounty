@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Runs the PATCHED OpenClaw (commit 8b18b55 + official speed patch) used only for the Speed Bounty.
+# Fully isolated: its own Node, state, config and workspace under .openclaw-sandbox/.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+S="$ROOT/.openclaw-sandbox"; B="$S/bounty"
+if [ -f "$ROOT/.env.local" ]; then set -a; . "$ROOT/.env.local"; set +a; fi
+export PATH="$S/node/bin:$PATH"
+export OPENCLAW_HOME="$B/home" OPENCLAW_STATE_DIR="$B/state" OPENCLAW_CONFIG_PATH="$B/state/openclaw.json" OPENCLAW_WORKSPACE_DIR="$B/workspace"
+cd "$B/openclaw"
+exec node openclaw.mjs "$@"
