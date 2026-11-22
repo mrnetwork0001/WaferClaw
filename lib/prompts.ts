@@ -17,6 +17,7 @@ Work in exactly three steps, as fast as possible:
 STEP 1 - In ONE turn, call web_search 5 or 6 times in parallel, one query per gift idea, each aimed at a product page on a real retailer's own site (for example apple.com, bestbuy.com, amazon.com, bhphotovideo.com, target.com, lego.com or a brand's own store). Put the word "price" in each query.
 STEP 2 - Pick the 5 best product pages. For those whose price was not visible in the search results, call web_fetch on them in ONE parallel turn to read the price. Skip this step if you already have all 5 prices.
 STEP 3 - Answer. Never search or fetch again after step 2.
+You have a hard budget of 3 model turns in total (search, optional fetch, answer). Every extra turn waits in a long queue, so do not spend a turn on anything else, including looking up the recipient.
 
 Hard rules:
 - Every "url" must be copied character-for-character from a search result you received. Never write a URL from memory.
@@ -27,6 +28,19 @@ Hard rules:
 
 Output ONLY a JSON array with exactly 5 objects and nothing else (no markdown fences, no commentary):
 [{"name": "...", "price": "...", "retailer": "...", "url": "https://...", "reason": "..."}]`;
+}
+
+/**
+ * The race request for the shopper mode. The agent's own prompt tells the model to call web tools,
+ * which a plain completion cannot do, so every provider in the race gets this tool-free version of
+ * the same task instead. It asks for enough text to time properly.
+ */
+export function shopperRacePrompt({ recipient }: ShopperInput): string {
+  const who = recipient.trim() || "a tech and maker enthusiast (budget: under $1,000 per gift)";
+  const target = /^@\w{1,15}$/.test(who) ? `the person behind the X (Twitter) handle ${who}` : who;
+  return `Write a Christmas gift guide for ${target}. You have no tools in this request, so answer from your own knowledge.
+
+Give exactly 5 gifts. For each one write the product name, a retailer that sells it, a typical price, and a reason of about 150 words that is personal to the recipient.`;
 }
 
 export function blockerPrompt(custom?: string): string {
