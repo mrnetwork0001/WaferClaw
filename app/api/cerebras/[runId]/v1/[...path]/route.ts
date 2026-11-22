@@ -4,7 +4,7 @@
 // server-reported `usage` + `time_info` (the source of every TPS number in the UI) off the stream.
 import { NextRequest } from "next/server";
 import { emit, getRun, type RunState } from "@/lib/bus";
-import { checkLink, extractGifts, urlWasSourced } from "@/lib/gifts";
+import { checkLink, extractGifts, priceWasSourced, urlWasSourced } from "@/lib/gifts";
 import type { TimeInfo, Usage } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -15,14 +15,26 @@ const MAX_QUEUE_WAIT_MS = 150_000;
 
 type Ctx = { params: Promise<{ runId: string; path: string[] }> };
 
+// This route only relays calls that belong to a run this server started, and only with the key the
+// caller itself presents (OpenClaw sends it). It never adds the server's key to a bare request.
+function refuse(req: NextRequest, runId: string): Response | null {
+  if (!getRun(runId)) return new Response(JSON.stringify({ error: { message: "unknown run" } }), { status: 404, headers: { "content-type": "application/json" } });
+  if (!req.headers.get("authorization")) return new Response(JSON.stringify({ error: { message: "missing Authorization header" } }), { status: 401, headers: { "content-type": "application/json" } });
+  return null;
+}
+
 export async function GET(req: NextRequest, ctx: Ctx) {
-  const { path } = await ctx.params;
+  const { runId, path } = await ctx.params;
+  const denied = refuse(req, runId);
+  if (denied) return denied;
   const res = await fetch(`${UPSTREAM}/${path.join("/")}${req.nextUrl.search}`, { headers: authHeaders(req) });
   return new Response(res.body, { status: res.status, headers: { "content-type": res.headers.get("content-type") || "application/json" } });
 }
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   const { runId, path } = await ctx.params;
+  const denied = refuse(req, runId);
+  if (denied) return denied;
   const run = getRun(runId);
   const bodyText = await req.text();
   const url = `${UPSTREAM}/${path.join("/")}`;
@@ -165,8 +177,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 }
 
 function authHeaders(req: NextRequest): Record<string, string> {
-  const auth = req.headers.get("authorization") || `Bearer ${process.env.CEREBRAS_API_KEY || ""}`;
-  return { authorization: auth };
+  return { authorization: req.headers.get("authorization") || "" };
 }
 
 function sleep(ms: number) {
@@ -207,7 +218,7 @@ function surfaceGifts(run: RunState, callContent: string) {
     const sourced = urlWasSourced(gift.url, run.toolText);
     const index = run.gifts.length;
     run.gifts.push({ gift, sourced });
-    emit(run, { t: "gift", index, gift, sourced, tps: 0 });
+    emit(run, { t: "gift", index, gift, sourced, priceSeen: priceWasSourced(gift.price, run.toolText), tps: 0 });
     emit(run, { t: "verify", index, status: "checking", http: null });
     const p = checkLink(gift.url).then((r) => {
       run.links[index] = r.status;
