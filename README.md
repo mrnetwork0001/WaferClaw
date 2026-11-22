@@ -30,3 +30,29 @@ Browser ──► /api/openclaw/run ──► openclaw agent exec ──► /api
 - Speed is `completion_tokens / completion_time` as reported by Cerebras per model call. Queue, network and tool time are shown separately and do not inflate or deflate it.
 - OpenClaw is limited to `web_search` and `web_fetch`; it cannot run commands or touch files.
 
+## Run it
+
+Requires Node 24.16+ (or 26.1+) and a Cerebras API key with access to `moonshotai-kimi-k3.1-pro-trial`.
+
+```bash
+npm install
+npm run setup:openclaw      # installs OpenClaw into .openclaw-sandbox/, creates .env.local
+# put your CEREBRAS_API_KEY in .env.local, then:
+npm run dev                 # http://localhost:3210
+npm run bounty              # same shopper task in the terminal, with an ASCII results table
+```
+
+`npm run bounty -- "@somehandle"` runs the shopper for a specific person.
+
+## Honest numbers
+
+The speed you see depends on how busy the Cerebras endpoint is. During the hackathon the Kimi preview endpoint was heavily loaded: our runs measured roughly 400–490 tok/s decode with long queue waits. The app shows whatever the server reports, including which model actually ran if a fallback was used.
+
+## Files
+
+- `app/page.tsx`, `components/*` — the UI
+- `app/api/openclaw/run` — starts a run, streams events
+- `app/api/cerebras/[runId]/v1/[...path]` — pass-through proxy and telemetry
+- `lib/openclaw-runner.ts`, `lib/prompts.ts`, `lib/gifts.ts` — harness runner, prompts, gift extraction and link checks
+- `scripts/setup-openclaw.sh`, `scripts/oc`, `scripts/benchmark-shopper.mjs`
+- [OPENCLAW_SETUP.md](OPENCLAW_SETUP.md) — setup details and the Speed Bounty build
